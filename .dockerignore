@@ -1,0 +1,73 @@
+# Node modules and build artifacts
+node_modules
+dist
+build
+out
+coverage
+.nyc_output
+
+# Development files
+.env
+.env.*
+.env.example
+*.log
+logs
+
+# Git and version control
+.git
+.gitignore
+.github
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation and assets (not needed in container)
+docs
+assets
+*.md
+!packages/*/README.md
+
+# Example files
+examples
+python
+
+# CI/CD files
+.github
+.circleci
+
+# Docker files (avoid recursion)
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+test
+tests
+__tests__
+
+# Temporary files
+tmp
+temp
+.tmp
+
+# Cache directories
+.cache
+.parcel-cache

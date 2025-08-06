@@ -15,8 +15,15 @@ export interface ContextMcpConfig {
     ollamaModel?: string;
     ollamaHost?: string;
     // Vector database configuration
+    vectorDatabase: 'Milvus' | 'Qdrant';
+    // Milvus configuration
     milvusAddress?: string; // Optional, can be auto-resolved from token
     milvusToken?: string;
+    // Qdrant configuration
+    qdrantUrl?: string;
+    qdrantApiKey?: string;
+    qdrantHost?: string;
+    qdrantPort?: number;
 }
 
 export interface CodebaseSnapshot {
@@ -66,7 +73,9 @@ export function createMcpConfig(): ContextMcpConfig {
     console.log(`[DEBUG]   OLLAMA_MODEL: ${envManager.get('OLLAMA_MODEL') || 'NOT SET'}`);
     console.log(`[DEBUG]   GEMINI_API_KEY: ${envManager.get('GEMINI_API_KEY') ? 'SET (length: ' + envManager.get('GEMINI_API_KEY')!.length + ')' : 'NOT SET'}`);
     console.log(`[DEBUG]   OPENAI_API_KEY: ${envManager.get('OPENAI_API_KEY') ? 'SET (length: ' + envManager.get('OPENAI_API_KEY')!.length + ')' : 'NOT SET'}`);
+    console.log(`[DEBUG]   VECTOR_DATABASE: ${envManager.get('VECTOR_DATABASE') || 'NOT SET'}`);
     console.log(`[DEBUG]   MILVUS_ADDRESS: ${envManager.get('MILVUS_ADDRESS') || 'NOT SET'}`);
+    console.log(`[DEBUG]   QDRANT_URL: ${envManager.get('QDRANT_URL') || 'NOT SET'}`);
     console.log(`[DEBUG]   NODE_ENV: ${envManager.get('NODE_ENV') || 'NOT SET'}`);
 
     const config: ContextMcpConfig = {
@@ -83,9 +92,16 @@ export function createMcpConfig(): ContextMcpConfig {
         // Ollama configuration
         ollamaModel: envManager.get('OLLAMA_MODEL'),
         ollamaHost: envManager.get('OLLAMA_HOST'),
-        // Vector database configuration - address can be auto-resolved from token
+        // Vector database configuration
+        vectorDatabase: (envManager.get('VECTOR_DATABASE') as 'Milvus' | 'Qdrant') || 'Milvus',
+        // Milvus configuration - address can be auto-resolved from token
         milvusAddress: envManager.get('MILVUS_ADDRESS'), // Optional, can be resolved from token
-        milvusToken: envManager.get('MILVUS_TOKEN')
+        milvusToken: envManager.get('MILVUS_TOKEN'),
+        // Qdrant configuration
+        qdrantUrl: envManager.get('QDRANT_URL'),
+        qdrantApiKey: envManager.get('QDRANT_API_KEY'),
+        qdrantHost: envManager.get('QDRANT_HOST'),
+        qdrantPort: envManager.get('QDRANT_PORT') ? parseInt(envManager.get('QDRANT_PORT')!, 10) : undefined
     };
 
     return config;
@@ -98,7 +114,21 @@ export function logConfigurationSummary(config: ContextMcpConfig): void {
     console.log(`[MCP]   Server: ${config.name} v${config.version}`);
     console.log(`[MCP]   Embedding Provider: ${config.embeddingProvider}`);
     console.log(`[MCP]   Embedding Model: ${config.embeddingModel}`);
-    console.log(`[MCP]   Milvus Address: ${config.milvusAddress || (config.milvusToken ? '[Auto-resolve from token]' : '[Not configured]')}`);
+    console.log(`[MCP]   Vector Database: ${config.vectorDatabase}`);
+
+    // Log vector database configuration
+    if (config.vectorDatabase === 'Milvus') {
+        console.log(`[MCP]   Milvus Address: ${config.milvusAddress || (config.milvusToken ? '[Auto-resolve from token]' : '[Not configured]')}`);
+    } else if (config.vectorDatabase === 'Qdrant') {
+        if (config.qdrantUrl) {
+            console.log(`[MCP]   Qdrant URL: ${config.qdrantUrl}`);
+        } else if (config.qdrantHost) {
+            console.log(`[MCP]   Qdrant Host: ${config.qdrantHost}:${config.qdrantPort || 6333}`);
+        } else {
+            console.log(`[MCP]   Qdrant Host: localhost:6333 (default)`);
+        }
+        console.log(`[MCP]   Qdrant API Key: ${config.qdrantApiKey ? '✅ Configured' : '❌ Not set'}`);
+    }
 
     // Log provider-specific configuration without exposing sensitive data
     switch (config.embeddingProvider) {
@@ -151,8 +181,17 @@ Environment Variables:
   OLLAMA_MODEL            Ollama model name (default: nomic-embed-text)
   
   Vector Database Configuration:
+  VECTOR_DATABASE         Vector database provider: Milvus, Qdrant (default: Milvus)
+  
+  Milvus Configuration:
   MILVUS_ADDRESS          Milvus address (optional, can be auto-resolved from token)
   MILVUS_TOKEN            Milvus token (optional, used for authentication and address resolution)
+  
+  Qdrant Configuration:
+  QDRANT_URL              Qdrant URL (e.g., https://your-cluster-url.qdrant.io)
+  QDRANT_API_KEY          Qdrant API key (optional, for Qdrant Cloud)
+  QDRANT_HOST             Qdrant host (default: localhost)
+  QDRANT_PORT             Qdrant port (default: 6333)
 
 Examples:
   # Start MCP server with OpenAI (default) and explicit Milvus address
@@ -161,13 +200,19 @@ Examples:
   # Start MCP server with OpenAI and auto-resolve Milvus address from token
   OPENAI_API_KEY=sk-xxx MILVUS_TOKEN=your-zilliz-token npx @zilliz/claude-context-mcp@latest
   
-  # Start MCP server with VoyageAI
-  EMBEDDING_PROVIDER=VoyageAI VOYAGEAI_API_KEY=pa-xxx MILVUS_TOKEN=your-token npx @zilliz/claude-context-mcp@latest
+  # Start MCP server with OpenAI and Qdrant Cloud
+  OPENAI_API_KEY=sk-xxx VECTOR_DATABASE=Qdrant QDRANT_URL=https://your-cluster.qdrant.io QDRANT_API_KEY=your-api-key npx @zilliz/claude-context-mcp@latest
   
-  # Start MCP server with Gemini
+  # Start MCP server with OpenAI and local Qdrant
+  OPENAI_API_KEY=sk-xxx VECTOR_DATABASE=Qdrant QDRANT_HOST=localhost QDRANT_PORT=6333 npx @zilliz/claude-context-mcp@latest
+  
+  # Start MCP server with VoyageAI and Qdrant
+  EMBEDDING_PROVIDER=VoyageAI VOYAGEAI_API_KEY=pa-xxx VECTOR_DATABASE=Qdrant QDRANT_URL=https://your-cluster.qdrant.io npx @zilliz/claude-context-mcp@latest
+  
+  # Start MCP server with Gemini and Milvus
   EMBEDDING_PROVIDER=Gemini GEMINI_API_KEY=xxx MILVUS_TOKEN=your-token npx @zilliz/claude-context-mcp@latest
   
-  # Start MCP server with Ollama
-  EMBEDDING_PROVIDER=Ollama EMBEDDING_MODEL=nomic-embed-text MILVUS_TOKEN=your-token npx @zilliz/claude-context-mcp@latest
+  # Start MCP server with Ollama and local Qdrant
+  EMBEDDING_PROVIDER=Ollama EMBEDDING_MODEL=nomic-embed-text VECTOR_DATABASE=Qdrant npx @zilliz/claude-context-mcp@latest
         `);
 } 

@@ -22,7 +22,7 @@ import {
     CallToolRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { Context } from "@zilliz/claude-context-core";
-import { MilvusVectorDatabase } from "@zilliz/claude-context-core";
+import { MilvusVectorDatabase, QdrantVectorDatabase } from "@zilliz/claude-context-core";
 
 // Import our modular components
 import { createMcpConfig, logConfigurationSummary, showHelpMessage, ContextMcpConfig } from "./config.js";
@@ -59,11 +59,24 @@ class ContextMcpServer {
         const embedding = createEmbeddingInstance(config);
         logEmbeddingProviderInfo(config, embedding);
 
-        // Initialize vector database
-        const vectorDatabase = new MilvusVectorDatabase({
-            address: config.milvusAddress,
-            ...(config.milvusToken && { token: config.milvusToken })
-        });
+        // Initialize vector database based on configuration
+        console.log(`[VECTOR_DB] Initializing vector database: ${config.vectorDatabase}`);
+        let vectorDatabase;
+        
+        if (config.vectorDatabase === 'Qdrant') {
+            vectorDatabase = new QdrantVectorDatabase({
+                url: config.qdrantUrl,
+                apiKey: config.qdrantApiKey,
+                host: config.qdrantHost,
+                port: config.qdrantPort
+            });
+        } else {
+            // Default to Milvus
+            vectorDatabase = new MilvusVectorDatabase({
+                address: config.milvusAddress,
+                ...(config.milvusToken && { token: config.milvusToken })
+            });
+        }
 
         // Initialize Claude Context
         this.context = new Context({

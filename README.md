@@ -30,16 +30,53 @@
 Model Context Protocol (MCP) allows you to integrate Claude Context with your favorite AI coding assistants, e.g. Claude Code.
 
 ## Quick Start
+
+### 🐳 Option 1: Docker Setup (Recommended for Local Development)
+
+For a complete self-hosted solution with Qdrant + Ollama:
+
+```bash
+# Clone and start the complete stack
+git clone https://github.com/zilliztech/claude-context.git
+cd claude-context
+docker-compose up -d  # No .env file needed!
+
+# Wait for services to initialize (first run takes ~5 minutes)
+docker-compose logs -f ollama-setup  # Monitor model download
+
+# Use with Claude Code
+claude mcp add claude-context-docker -- docker exec -i claude-context-mcp node packages/mcp/dist/index.js
+```
+
+This gives you:
+- 🚀 **Qdrant** vector database (localhost:6333) 
+- 🧠 **Ollama** with nomic-embed-text model (localhost:11434)
+- 📡 **MCP Server** ready for Claude Code integration
+- 💾 **Persistent data** with Docker volumes
+
+📚 See [DOCKER-SETUP.md](DOCKER-SETUP.md) for detailed Docker configuration.
+
+---
+
+### 🌐 Option 2: Cloud Setup
+
 ### Prerequisites
 
 <details>
-<summary>Get a free vector database on Zilliz Cloud 👈</summary>
+<summary>Choose your vector database 👈</summary>
 
-Claude Context needs a vector database. You can [sign up](https://cloud.zilliz.com/signup?utm_source=github&utm_medium=referral&utm_campaign=2507-codecontext-readme) on Zilliz Cloud to get an API key.
+Claude Context needs a vector database. You have two options:
+
+**Option 1: Zilliz Cloud (Managed Milvus)**
+You can [sign up](https://cloud.zilliz.com/signup?utm_source=github&utm_medium=referral&utm_campaign=2507-codecontext-readme) on Zilliz Cloud to get an API key.
 
 ![](assets/signup_and_get_apikey.png)
 
-Copy your Personal Key to replace `your-zilliz-cloud-api-key` in the configuration examples.
+**Option 2: Qdrant**
+- **Local:** Run `docker run -p 6333:6333 qdrant/qdrant` for local development
+- **Cloud:** Sign up at [cloud.qdrant.io](https://cloud.qdrant.io) for managed Qdrant
+
+Copy your API key/credentials to replace the placeholders in configuration examples.
 </details>
 
 <details>
@@ -59,8 +96,14 @@ Copy your key and use it in the configuration examples below as `your-openai-api
 Use the command line interface to add the Claude Context MCP server:
 
 ```bash
-# Add the Claude Context MCP server
+# Add the Claude Context MCP server with Zilliz Cloud (Milvus)
 claude mcp add claude-context -e OPENAI_API_KEY=your-openai-api-key -e MILVUS_TOKEN=your-zilliz-cloud-api-key -- npx @zilliz/claude-context-mcp@latest
+
+# OR add with Qdrant Cloud
+claude mcp add claude-context -e OPENAI_API_KEY=your-openai-api-key -e VECTOR_DATABASE=Qdrant -e QDRANT_URL=https://your-cluster.qdrant.io -e QDRANT_API_KEY=your-qdrant-api-key -- npx @zilliz/claude-context-mcp@latest
+
+# OR add with local Qdrant
+claude mcp add claude-context -e OPENAI_API_KEY=your-openai-api-key -e VECTOR_DATABASE=Qdrant -e QDRANT_HOST=localhost -e QDRANT_PORT=6333 -- npx @zilliz/claude-context-mcp@latest
 ```
 
 See the [Claude Code MCP documentation](https://docs.anthropic.com/en/docs/claude-code/mcp) for more details about MCP server management.

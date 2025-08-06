@@ -1,0 +1,30 @@
+{
+    "name": "claude-context-qdrant-example",
+    "version": "1.0.0",
+    "description": "Example usage of Claude Context with Qdrant vector database",
+    "main": "index.ts",
+    "private": true,
+    "scripts": {
+        "start": "tsx index.ts",
+        "dev": "tsx --watch index.ts",
+        "build": "tsc",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@zilliz/claude-context-core": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "tsx": "^4.19.4",
+        "typescript": "^5.0.0"
+    },
+    "engines": {
+        "node": ">=20.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/zilliztech/claude-context.git",
+        "directory": "examples/qdrant-usage"
+    },
+    "license": "MIT"
+}
